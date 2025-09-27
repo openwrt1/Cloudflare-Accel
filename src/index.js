@@ -25,6 +25,7 @@ const ALLOWED_HOSTS = [
   "raw.githubusercontent.com",
   "gist.github.com",
   "gist.githubusercontent.com",
+  "git.openwrt.org",
 ];
 
 // RESTRICT_PATHS: 控制是否限制 GitHub 和 Docker 请求的路径。
@@ -45,370 +46,6 @@ const ALLOWED_PATHS = [
 ];
 
 // 用户配置区域结束 =================================
-
-// 闪电 SVG 图标（Base64 编码）
-const LIGHTNING_SVG = `
-<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="#FBBF24" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-  <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
-</svg>`;
-
-// 首页 HTML
-const HOMEPAGE_HTML = `
-<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Cloudflare 加速</title>
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,${encodeURIComponent(LIGHTNING_SVG)}">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    body {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: 'Inter', sans-serif;
-      transition: background-color 0.3s, color 0.3s;
-      padding: 1rem;
-    }
-    .light-mode {
-      background: linear-gradient(to bottom right, #f1f5f9, #e2e8f0);
-      color: #111827;
-    }
-    .dark-mode {
-      background: linear-gradient(to bottom right, #1f2937, #374151);
-      color: #e5e7eb;
-    }
-    .container {
-      width: 100%;
-      max-width: 800px;
-      padding: 1.5rem;
-      border-radius: 0.75rem;
-      border: 1px solid #e5e7eb;
-      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
-    }
-    .light-mode .container {
-      background: #ffffff;
-    }
-    .dark-mode .container {
-      background: #1f2937;
-    }
-    .section-box {
-      background: linear-gradient(to bottom, #ffffff, #f3f4f6);
-      border-radius: 0.5rem;
-      padding: 1.5rem;
-      margin-bottom: 1.5rem;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-    }
-    .dark-mode .section-box {
-      background: linear-gradient(to bottom, #374151, #1f2937);
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    }
-    .theme-toggle {
-      position: fixed;
-      top: 0.5rem;
-      right: 0.5rem;
-      padding: 0.5rem;
-      font-size: 1.2rem;
-    }
-    .toast {
-      position: fixed;
-      bottom: 1rem;
-      left: 50%;
-      transform: translateX(-50%);
-      background: #10b981;
-      color: white;
-      padding: 0.75rem 1.5rem;
-      border-radius: 0.5rem;
-      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-      opacity: 0;
-      transition: opacity 0.3s;
-      font-size: 0.9rem;
-      max-width: 90%;
-      text-align: center;
-    }
-    .toast.show {
-      opacity: 1;
-    }
-    .result-text {
-      word-break: break-all;
-      overflow-wrap: break-word;
-      font-size: 0.95rem;
-      max-width: 100%;
-      padding: 0.5rem;
-      border-radius: 0.25rem;
-      background: #f3f4f6;
-    }
-    .dark-mode .result-text {
-      background: #2d3748;
-    }
-
-    input[type="text"] {
-      background-color: white !important;
-      color: #111827 !important;
-    }
-    .dark-mode input[type="text"] {
-      background-color: #374151 !important;
-      color: #e5e7eb !important;
-    }
-
-    @media (max-width: 640px) {
-      .container {
-        padding: 1rem;
-      }
-      .section-box {
-        padding: 1rem;
-        margin-bottom: 1rem;
-      }
-      h1 {
-        font-size: 1.5rem;
-        margin-bottom: 1.5rem;
-      }
-      h2 {
-        font-size: 1.25rem;
-        margin-bottom: 0.75rem;
-      }
-      p {
-        font-size: 0.875rem;
-      }
-      input {
-        font-size: 0.875rem;
-        padding: 0.5rem;
-        min-height: 44px;
-      }
-      button {
-        font-size: 0.875rem;
-        padding: 0.5rem 1rem;
-        min-height: 44px;
-      }
-      .flex.gap-2 {
-        flex-direction: column;
-        gap: 0.5rem;
-      }
-      .github-buttons, .docker-buttons {
-        flex-direction: column;
-        gap: 0.5rem;
-      }
-      .result-text {
-        font-size: 0.8rem;
-        padding: 0.4rem;
-      }
-      footer {
-        font-size: 0.75rem;
-      }
-    }
-  </style>
-</head>
-<body class="light-mode">
-  <button onclick="toggleTheme()" class="theme-toggle bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full hover:bg-gray-300 dark:hover:bg-gray-600 transition">
-    <span class="sun">☀️</span>
-    <span class="moon hidden">🌙</span>
-  </button>
-  <div class="container mx-auto">
-    <h1 class="text-3xl font-bold text-center mb-8">Cloudflare 加速下载</h1>
-
-    <!-- GitHub 链接转换 -->
-    <div class="section-box">
-      <h2 class="text-xl font-semibold mb-2">⚡ GitHub 文件加速</h2>
-      <p class="text-gray-600 dark:text-gray-300 mb-4">输入 GitHub 文件链接，自动转换为加速链接。也可以直接在链接前加上本站域名使用。</p>
-      <div class="flex gap-2 mb-2">
-        <input
-          id="github-url"
-          type="text"
-          placeholder="请输入 GitHub 文件链接，例如：https://github.com/user/repo/releases/..."
-          class="flex-grow p-2 border border-gray-400 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
-        >
-        <button
-          onclick="convertGithubUrl()"
-          class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
-        >
-          获取加速链接
-        </button>
-      </div>
-      <p id="github-result" class="mt-2 text-green-600 dark:text-green-400 result-text hidden"></p>
-      <div id="github-buttons" class="flex gap-2 mt-2 github-buttons hidden">
-        <button onclick="copyGithubUrl()" class="bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 px-3 py-1 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition w-full">📋 复制链接</button>
-        <button onclick="openGithubUrl()" class="bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 px-3 py-1 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition w-full">🔗 打开链接</button>
-      </div>
-    </div>
-
-    <!-- Docker 镜像加速 -->
-    <div class="section-box">
-      <h2 class="text-xl font-semibold mb-2">🐳 Docker 镜像加速</h2>
-      <p class="text-gray-600 dark:text-gray-300 mb-4">输入原镜像地址（如 hello-world 或 ghcr.io/user/repo），获取加速拉取命令。</p>
-      <div class="flex gap-2 mb-2">
-        <input
-          id="docker-image"
-          type="text"
-          placeholder="请输入镜像地址，例如：hello-world 或 ghcr.io/user/repo"
-          class="flex-grow p-2 border border-gray-400 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
-        >
-        <button
-          onclick="convertDockerImage()"
-          class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
-        >
-          获取加速命令
-        </button>
-      </div>
-      <p id="docker-result" class="mt-2 text-green-600 dark:text-green-400 result-text hidden"></p>
-      <div id="docker-buttons" class="flex gap-2 mt-2 docker-buttons hidden">
-        <button onclick="copyDockerCommand()" class="bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 px-3 py-1 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition w-full">📋 复制命令</button>
-      </div>
-    </div>
-
-    <footer class="mt-6 text-center text-gray-500 dark:text-gray-400">
-      Powered by <a href="https://github.com/fscarmen2/Cloudflare-Accel" class="text-blue-500 hover:underline">fscarmen2/Cloudflare-Accel</a>
-    </footer>
-  </div>
-
-  <div id="toast" class="toast"></div>
-
-  <script>
-    // 动态获取当前域名
-    const currentDomain = window.location.hostname;
-
-    // 主题切换
-    function toggleTheme() {
-      const body = document.body;
-      const sun = document.querySelector('.sun');
-      const moon = document.querySelector('.moon');
-      if (body.classList.contains('light-mode')) {
-        body.classList.remove('light-mode');
-        body.classList.add('dark-mode');
-        sun.classList.add('hidden');
-        moon.classList.remove('hidden');
-        localStorage.setItem('theme', 'dark');
-      } else {
-        body.classList.remove('dark-mode');
-        body.classList.add('light-mode');
-        moon.classList.add('hidden');
-        sun.classList.remove('hidden');
-        localStorage.setItem('theme', 'light');
-      }
-    }
-
-    // 初始化主题
-    if (localStorage.getItem('theme') === 'dark') {
-      toggleTheme();
-    }
-
-    // 显示弹窗提示
-    function showToast(message, isError = false) {
-      const toast = document.getElementById('toast');
-      toast.textContent = message;
-      toast.classList.remove(isError ? 'bg-green-500' : 'bg-red-500');
-      toast.classList.add(isError ? 'bg-red-500' : 'bg-green-500');
-      toast.classList.add('show');
-      setTimeout(() => {
-        toast.classList.remove('show');
-      }, 3000);
-    }
-
-    // 复制文本的通用函数
-    function copyToClipboard(text) {
-      // 尝试使用 navigator.clipboard API
-      if (navigator.clipboard && window.isSecureContext) {
-        return navigator.clipboard.writeText(text).catch(err => {
-          console.error('Clipboard API failed:', err);
-          return false;
-        });
-      }
-      // 后备方案：使用 document.execCommand
-      const textarea = document.createElement('textarea');
-      textarea.value = text;
-      textarea.style.position = 'fixed';
-      textarea.style.opacity = '0';
-      document.body.appendChild(textarea);
-      textarea.focus();
-      textarea.select();
-      try {
-        const successful = document.execCommand('copy');
-        document.body.removeChild(textarea);
-        return successful ? Promise.resolve() : Promise.reject(new Error('Copy command failed'));
-      } catch (err) {
-        document.body.removeChild(textarea);
-        return Promise.reject(err);
-      }
-    }
-
-    // GitHub 链接转换
-    let githubAcceleratedUrl = '';
-    function convertGithubUrl() {
-      const input = document.getElementById('github-url').value.trim();
-      const result = document.getElementById('github-result');
-      const buttons = document.getElementById('github-buttons');
-      if (!input) {
-        showToast('请输入有效的 GitHub 链接', true);
-        result.classList.add('hidden');
-        buttons.classList.add('hidden');
-        return;
-      }
-      if (!input.startsWith('https://')) {
-        showToast('链接必须以 https:// 开头', true);
-        result.classList.add('hidden');
-        buttons.classList.add('hidden');
-        return;
-      }
-
-      // 保持现有格式：域名/https://原始链接
-      githubAcceleratedUrl = 'https://' + currentDomain + '/https://' + input.substring(8);
-      result.textContent = '加速链接: ' + githubAcceleratedUrl;
-      result.classList.remove('hidden');
-      buttons.classList.remove('hidden');
-      copyToClipboard(githubAcceleratedUrl).then(() => {
-        showToast('已复制到剪贴板');
-      }).catch(err => {
-        showToast('复制失败: ' + err.message, true);
-      });
-    }
-
-    function copyGithubUrl() {
-      copyToClipboard(githubAcceleratedUrl).then(() => {
-        showToast('已手动复制到剪贴板');
-      }).catch(err => {
-        showToast('手动复制失败: ' + err.message, true);
-      });
-    }
-
-    function openGithubUrl() {
-      window.open(githubAcceleratedUrl, '_blank');
-    }
-
-    // Docker 镜像转换
-    let dockerCommand = '';
-    function convertDockerImage() {
-      const input = document.getElementById('docker-image').value.trim();
-      const result = document.getElementById('docker-result');
-      const buttons = document.getElementById('docker-buttons');
-      if (!input) {
-        showToast('请输入有效的镜像地址', true);
-        result.classList.add('hidden');
-        buttons.classList.add('hidden');
-        return;
-      }
-      dockerCommand = 'docker pull ' + currentDomain + '/' + input;
-      result.textContent = '加速命令: ' + dockerCommand;
-      result.classList.remove('hidden');
-      buttons.classList.remove('hidden');
-      copyToClipboard(dockerCommand).then(() => {
-        showToast('已复制到剪贴板');
-      }).catch(err => {
-        showToast('复制失败: ' + err.message, true);
-      });
-    }
-
-    function copyDockerCommand() {
-      copyToClipboard(dockerCommand).then(() => {
-        showToast('已手动复制到剪贴板');
-      }).catch(err => {
-        showToast('手动复制失败: ' + err.message, true);
-      });
-    }
-  </script>
-</body>
-</html>
-`;
 
 async function handleToken(realm, service, scope) {
   const tokenUrl = `${realm}?service=${service}&scope=${scope}`;
@@ -492,16 +129,20 @@ function parseTarget(url) {
   if (fullPath.startsWith("https://") || fullPath.startsWith("http://")) {
     const urlObj = new URL(fullPath);
     targetDomain = urlObj.hostname;
-    targetPath = urlObj.pathname.substring(1) + urlObj.search;
+    targetPath = urlObj.pathname.substring(1);
   } else if (pathParts[0] === "docker.io") {
     targetDomain = "registry-1.docker.io";
     targetPath =
       pathParts.length === 2
         ? `library/${pathParts[1]}`
         : pathParts.slice(1).join("/");
-  } else if (ALLOWED_HOSTS.includes(pathParts[0])) {
+  } else if (ALLOWED_HOSTS.some((host) => host.includes(pathParts[0]))) {
     targetDomain = pathParts[0];
-    targetPath = pathParts.slice(1).join("/") + url.search;
+    targetPath = pathParts.slice(1).join("/");
+  } else if (pathParts[0].includes(".")) {
+    // 如果路径的第一部分看起来像一个域名但不在白名单中，则直接拒绝
+    targetDomain = pathParts[0]; // 仅用于后续的白名单检查
+    targetPath = "";
   } else if (pathParts.length >= 1 && pathParts[0] === "library") {
     targetDomain = "registry-1.docker.io";
     targetPath = pathParts.join("/");
@@ -537,7 +178,7 @@ function parseTarget(url) {
   };
 }
 
-async function handleRequest(request, redirectCount = 0) {
+async function handleRequest(request, redirectCount = 0, isRedirect = false) {
   const MAX_REDIRECTS = 5; // 最大重定向次数
   const url = new URL(request.url);
   let path = url.pathname;
@@ -545,62 +186,71 @@ async function handleRequest(request, redirectCount = 0) {
   // 记录请求信息
   console.log(`Request: ${request.method} ${path}`);
 
-  // 首页路由
-  if (path === "/" || path === "") {
-    return new Response(HOMEPAGE_HTML, {
-      status: 200,
-      headers: { "Content-Type": "text/html; charset=utf-8" },
-    });
-  }
+  let targetUrl, targetDomain, isDockerRequest;
 
-  const targetInfo = parseTarget(url);
-  if (!targetInfo) {
-    return new Response("Invalid request: target domain or path required\n", {
-      status: 400,
-    });
-  }
-
-  const {
-    targetDomain,
-    targetPath,
-    isDockerRequest,
-    isV2Request,
-    v2RequestType,
-    v2RequestTag,
-  } = targetInfo;
-
-  // 默认白名单检查：只允许 ALLOWED_HOSTS 中的域名
-  if (!ALLOWED_HOSTS.includes(targetDomain)) {
-    console.log(`Blocked: Domain ${targetDomain} not in allowed list`);
-    return new Response(`Error: Invalid target domain.\n`, { status: 400 });
-  }
-
-  // 路径白名单检查（仅当 RESTRICT_PATHS = true 时）
-  if (RESTRICT_PATHS) {
-    const checkPath = isDockerRequest ? targetPath : path;
-    console.log(`Checking whitelist against path: ${checkPath}`);
-    const isPathAllowed = ALLOWED_PATHS.some((pathString) =>
-      checkPath.toLowerCase().includes(pathString.toLowerCase()),
-    );
-    if (!isPathAllowed) {
-      console.log(`Blocked: Path ${checkPath} not in allowed paths`);
-      return new Response(`Error: The path is not in the allowed paths.\n`, {
-        status: 403,
+  if (isRedirect) {
+    // 如果是重定向请求，直接使用请求的 URL 作为目标
+    targetUrl = request.url;
+    targetDomain = new URL(targetUrl).hostname;
+    isDockerRequest = [
+      "quay.io",
+      "gcr.io",
+      "k8s.gcr.io",
+      "registry.k8s.io",
+      "ghcr.io",
+      "docker.cloudsmith.io",
+      "registry-1.docker.io",
+    ].includes(targetDomain);
+  } else {
+    // 否则，解析初始请求
+    const targetInfo = parseTarget(url);
+    if (!targetInfo) {
+      return new Response("Invalid request: target domain or path required\n", {
+        status: 400,
       });
     }
-  }
 
-  // 构建目标 URL
-  let targetUrl;
-  if (isDockerRequest) {
-    if (isV2Request && v2RequestType && v2RequestTag) {
-      // 重构 V2 API URL
-      targetUrl = `https://${targetDomain}/v2/${targetPath}/${v2RequestType}/${v2RequestTag}`;
-    } else {
-      targetUrl = `https://${targetDomain}/${isV2Request ? "v2/" : ""}${targetPath}`;
+    targetDomain = targetInfo.targetDomain;
+    isDockerRequest = targetInfo.isDockerRequest;
+
+    // 默认白名单检查：只允许 ALLOWED_HOSTS 中的域名
+    if (!ALLOWED_HOSTS.includes(targetDomain)) {
+      console.log(`Blocked: Domain ${targetDomain} not in allowed list`);
+      return new Response(`Error: Invalid target domain.\n`, { status: 400 });
     }
-  } else {
-    targetUrl = `https://${targetDomain}/${targetPath}`;
+
+    // 路径白名单检查（仅当 RESTRICT_PATHS = true 时）
+    if (RESTRICT_PATHS) {
+      const checkPath = isDockerRequest ? targetInfo.targetPath : path;
+      console.log(`Checking whitelist against path: ${checkPath}`);
+      const isPathAllowed = ALLOWED_PATHS.some((pathString) =>
+        checkPath.toLowerCase().includes(pathString.toLowerCase()),
+      );
+      if (!isPathAllowed) {
+        console.log(`Blocked: Path ${checkPath} not in allowed paths`);
+        return new Response(`Error: The path is not in the allowed paths.\n`, {
+          status: 403,
+        });
+      }
+    }
+
+    // 构建目标 URL
+    if (isDockerRequest) {
+      if (
+        targetInfo.isV2Request &&
+        targetInfo.v2RequestType &&
+        targetInfo.v2RequestTag
+      ) {
+        // 重构 V2 API URL
+        targetUrl = `https://${targetDomain}/v2/${targetInfo.targetPath}/${targetInfo.v2RequestType}/${targetInfo.v2RequestTag}`;
+      } else {
+        targetUrl = `https://${targetDomain}/${targetInfo.isV2Request ? "v2/" : ""}${targetInfo.targetPath}`;
+      }
+      // 为 Docker 请求也附加查询参数
+      targetUrl += url.search;
+    } else {
+      targetUrl = `https://${targetDomain}/${targetInfo.targetPath}${url.search}`;
+    }
   }
 
   const newRequestHeaders = new Headers(request.headers);
@@ -629,7 +279,7 @@ async function handleRequest(request, redirectCount = 0) {
     console.log(`Initial response: ${response.status} ${response.statusText}`);
 
     // 处理 Docker 认证挑战
-    if (isDockerRequest && response.status === 401) {
+    if (response.status === 401) {
       const wwwAuth = response.headers.get("WWW-Authenticate");
       if (wwwAuth) {
         const authMatch = wwwAuth.match(
@@ -647,66 +297,31 @@ async function handleRequest(request, redirectCount = 0) {
             scope,
           );
           if (token) {
-            const authHeaders = new Headers(request.headers);
-            authHeaders.set("Authorization", `Bearer ${token}`);
-            authHeaders.set("Host", targetDomain);
-            // 如果目标是 S3，添加必要的 x-amz 头；否则删除可能干扰的头部
-            if (isAmazonS3(targetUrl)) {
-              authHeaders.set("x-amz-content-sha256", getEmptyBodySHA256());
-              authHeaders.set(
-                "x-amz-date",
-                new Date().toISOString().replace(/[-:T]/g, "").slice(0, -5) +
-                  "Z",
-              );
-            } else {
-              authHeaders.delete("x-amz-content-sha256");
-              authHeaders.delete("x-amz-date");
-              authHeaders.delete("x-amz-security-token");
-              authHeaders.delete("x-amz-user-agent");
-            }
-
-            const authRequest = new Request(targetUrl, {
-              method: request.method,
-              headers: authHeaders,
-              body: request.body,
-              redirect: "manual",
-            });
             console.log("Retrying with token");
-            response = await fetch(authRequest);
-            console.log(
-              `Token response: ${response.status} ${response.statusText}`,
-            );
+            newRequestHeaders.set("Authorization", `Bearer ${token}`);
           } else {
             console.log("No token acquired, falling back to anonymous request");
-            const anonHeaders = new Headers(request.headers);
-            anonHeaders.delete("Authorization");
-            anonHeaders.set("Host", targetDomain);
-            // 如果目标是 S3，添加必要的 x-amz 头；否则删除可能干扰的头部
-            if (isAmazonS3(targetUrl)) {
-              anonHeaders.set("x-amz-content-sha256", getEmptyBodySHA256());
-              anonHeaders.set(
-                "x-amz-date",
-                new Date().toISOString().replace(/[-:T]/g, "").slice(0, -5) +
-                  "Z",
-              );
-            } else {
-              anonHeaders.delete("x-amz-content-sha256");
-              anonHeaders.delete("x-amz-date");
-              anonHeaders.delete("x-amz-security-token");
-              anonHeaders.delete("x-amz-user-agent");
-            }
+            newRequestHeaders.delete("Authorization");
+          }
 
-            const anonRequest = new Request(targetUrl, {
-              method: request.method,
-              headers: anonHeaders,
-              body: request.body,
-              redirect: "manual",
-            });
-            response = await fetch(anonRequest);
-            console.log(
-              `Anonymous response: ${response.status} ${response.statusText}`,
+          // 统一处理 S3 头部
+          if (isAmazonS3(targetUrl)) {
+            newRequestHeaders.set("x-amz-content-sha256", getEmptyBodySHA256());
+            newRequestHeaders.set(
+              "x-amz-date",
+              new Date().toISOString().replace(/[-:T]/g, "").slice(0, -5) + "Z",
             );
           }
+
+          response = await fetch(targetUrl, {
+            method: request.method,
+            headers: newRequestHeaders,
+            body: request.body,
+            redirect: "manual",
+          });
+          console.log(
+            `Retry response: ${response.status} ${response.statusText}`,
+          );
         } else {
           console.log("Invalid WWW-Authenticate header");
         }
@@ -715,64 +330,51 @@ async function handleRequest(request, redirectCount = 0) {
       }
     }
 
-    // 处理 S3 重定向（Docker 镜像层）
-    if (
-      isDockerRequest &&
-      (response.status === 307 || response.status === 302)
-    ) {
+    // 递归处理所有 301, 302, 307, 308 重定向
+    if ([301, 302, 307, 308].includes(response.status)) {
       const redirectUrl = response.headers.get("Location");
-      if (redirectUrl) {
-        console.log(`Redirect detected: ${redirectUrl}`);
-        const EMPTY_BODY_SHA256 = getEmptyBodySHA256();
-        const redirectHeaders = new Headers(request.headers);
-        redirectHeaders.set("Host", new URL(redirectUrl).hostname);
-
-        // 对于任何重定向，都添加必要的AWS头（如果需要）
-        if (isAmazonS3(redirectUrl)) {
-          redirectHeaders.set("x-amz-content-sha256", EMPTY_BODY_SHA256);
-          redirectHeaders.set(
-            "x-amz-date",
-            new Date().toISOString().replace(/[-:T]/g, "").slice(0, -5) + "Z",
-          );
-        }
-
-        if (response.headers.get("Authorization")) {
-          redirectHeaders.set(
-            "Authorization",
-            response.headers.get("Authorization"),
-          );
-        }
-
+      if (redirectUrl && redirectCount < MAX_REDIRECTS) {
+        console.log(
+          `Redirecting to: ${redirectUrl}. Count: ${redirectCount + 1}`,
+        );
+        // 创建一个新的请求对象来跟踪重定向
+        // 注意：这里我们用 redirectUrl 替换了原始请求的 URL
         const redirectRequest = new Request(redirectUrl, {
+          headers: request.headers,
           method: request.method,
-          headers: redirectHeaders,
           body: request.body,
           redirect: "manual",
         });
-        response = await fetch(redirectRequest);
-        console.log(
-          `Redirect response: ${response.status} ${response.statusText}`,
-        );
-
-        if (!response.ok) {
-          console.log(
-            "Redirect request failed, returning original redirect response",
-          );
-          return new Response(response.body, {
-            status: response.status,
-            headers: response.headers,
-          });
-        }
+        // 递归调用 handleRequest，并增加重定向计数
+        return handleRequest(redirectRequest, redirectCount + 1, true);
+      } else if (redirectUrl) {
+        // 达到最大重定向次数
+        console.log(`Max redirects reached for ${redirectUrl}`);
+        return new Response("Too many redirects", { status: 508 });
       }
     }
 
     // 复制响应并添加 CORS 头
     const newResponse = new Response(response.body, response);
     newResponse.headers.set("Access-Control-Allow-Origin", "*");
+
+    // 清理可能引起问题的上游安全响应头
+    newResponse.headers.delete("Content-Security-Policy");
+    newResponse.headers.delete("Content-Security-Policy-Report-Only");
+    newResponse.headers.delete("Clear-Site-Data");
+    newResponse.headers.delete("Cross-Origin-Embedder-Policy");
+    newResponse.headers.delete("Cross-Origin-Opener-Policy");
+    newResponse.headers.delete("Cross-Origin-Resource-Policy");
+
     newResponse.headers.set(
       "Access-Control-Allow-Methods",
       "GET, HEAD, POST, OPTIONS",
     );
+    newResponse.headers.set(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization",
+    );
+
     if (isDockerRequest) {
       newResponse.headers.set(
         "Docker-Distribution-API-Version",
@@ -791,8 +393,60 @@ async function handleRequest(request, redirectCount = 0) {
   }
 }
 
+async function serveStaticAsset(request, env) {
+  const url = new URL(request.url);
+  try {
+    let key = url.pathname.substring(1); // 移除开头的 '/'
+
+    // 如果是根路径，则提供 index.html
+    if (key === "") {
+      key = "index.html";
+    }
+
+    // 从 KV 中获取文件内容
+    const asset = await env.SITE_ASSETS.get(key, "stream");
+
+    if (asset === null) {
+      // 如果找不到，可以返回一个自定义的404页面，或者简单的文本
+      return new Response("Not Found", { status: 404 });
+    }
+
+    // 根据文件扩展名设置正确的 Content-Type
+    const contentType =
+      {
+        html: "text/html;charset=UTF-8",
+        css: "text/css;charset=UTF-8",
+        js: "application/javascript;charset=UTF-8",
+        svg: "image/svg+xml",
+      }[key.split(".").pop()] || "application/octet-stream";
+
+    return new Response(asset, {
+      headers: { "Content-Type": contentType },
+    });
+  } catch (e) {
+    console.error(`Error serving static asset: ${e}`);
+    return new Response("Error serving asset", { status: 500 });
+  }
+}
+
 export default {
-  async fetch(request, env, ctx) {
-    return handleRequest(request);
+  async fetch(request, env) {
+    const url = new URL(request.url);
+
+    // 检查是否为 API/代理请求
+    // 规则：如果路径包含多个段，或以特定前缀开头，则为 API 请求
+    const isApiRequest =
+      url.pathname.split("/").filter(Boolean).length > 1 ||
+      url.pathname.startsWith("/v2/") ||
+      url.pathname.includes("https://") ||
+      ALLOWED_HOSTS.some((host) => url.pathname.startsWith(`/${host}`));
+
+    // 如果不是 API 请求，并且是 GET 方法，则尝试从 KV 提供静态文件
+    if (!isApiRequest && request.method === "GET") {
+      return serveStaticAsset(request, env);
+    }
+
+    // 否则，执行原来的代理逻辑
+    return handleRequest(request, 0, false);
   },
 };

@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Cloudflare 加速</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body class="light-mode">
+    <button
+      onclick="toggleTheme()"
+      class="theme-toggle bg-gray-200 dark:bg-gray-700 text-gray-800 dark:text-gray-200 rounded-full hover:bg-gray-300 dark:hover:bg-gray-600 transition"
+    >
+      <span class="sun">☀️</span>
+      <span class="moon hidden">🌙</span>
+    </button>
+    <div class="container mx-auto">
+      <h1 class="text-3xl font-bold text-center mb-8">Cloudflare 加速下载</h1>
+
+      <!-- GitHub 链接转换 -->
+      <div class="section-box">
+        <h2 class="text-xl font-semibold mb-2">⚡ GitHub 文件加速</h2>
+        <p class="text-gray-600 dark:text-gray-300 mb-4">
+          输入 GitHub 的 <strong>.zip</strong>
+          文件链接，自动转换为加速链接。
+        </p>
+        <div class="flex gap-2 mb-2">
+          <input
+            id="github-url"
+            type="text"
+            placeholder="请输入 GitHub 文件链接，例如：https://github.com/user/repo/releases/...XXX.zip"
+            class="flex-grow p-2 border border-gray-400 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+          />
+          <button
+            onclick="convertGithubUrl()"
+            class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
+          >
+            获取加速链接
+          </button>
+        </div>
+        <p
+          id="github-result"
+          class="mt-2 text-green-600 dark:text-green-400 result-text hidden"
+        ></p>
+        <div id="github-buttons" class="flex gap-2 mt-2 github-buttons hidden">
+          <button
+            onclick="copyGithubUrl()"
+            class="bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 px-3 py-1 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition w-full"
+          >
+            📋 复制链接
+          </button>
+          <button
+            onclick="openGithubUrl()"
+            class="bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 px-3 py-1 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition w-full"
+          >
+            🔗 打开链接
+          </button>
+        </div>
+      </div>
+
+      <!-- Git Clone 加速 -->
+      <div class="section-box">
+        <h2 class="text-xl font-semibold mb-2">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 16 16"
+            class="inline-block w-6 h-6 -mt-1 mr-1 fill-current"
+          >
+            <path
+              d="M8 0c4.42 0 8 3.58 8 8a8.013 8.013 0 0 1-5.45 7.59c-.4.08-.55-.17-.55-.38 0-.19.01-.82.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.28.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21-.15.46-.55.38A8.013 8.013 0 0 1 0 8c0-4.42 3.58-8 8-8Z"
+            ></path>
+          </svg>
+          <span class="font-mono">git clone</span> 加速
+        </h2>
+        <p class="text-gray-600 dark:text-gray-300 mb-4">
+          输入 GitHub 仓库地址 (例如:
+          https://github.com/user/repo.git)，获取加速命令。
+        </p>
+        <div class="flex gap-2 mb-2">
+          <input
+            id="git-url"
+            type="text"
+            placeholder="请输入 GitHub 仓库地址，例如: https://github.com/user/repo.git"
+            class="flex-grow p-2 border border-gray-400 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+          />
+          <button
+            onclick="convertGitCloneUrl()"
+            class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
+          >
+            获取加速命令
+          </button>
+        </div>
+        <p
+          id="git-result"
+          class="mt-2 text-green-600 dark:text-green-400 result-text hidden"
+        ></p>
+        <div id="git-buttons" class="flex gap-2 mt-2 git-buttons hidden">
+          <button
+            onclick="copyGitCommand()"
+            class="bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 px-3 py-1 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition w-full"
+          >
+            📋 复制命令
+          </button>
+        </div>
+      </div>
+
+      <!-- Docker 镜像加速 -->
+      <div class="section-box">
+        <h2 class="text-xl font-semibold mb-2">🐳 Docker 镜像加速</h2>
+        <p class="text-gray-600 dark:text-gray-300 mb-4">
+          输入原镜像地址（如 hello-world 或
+          ghcr.io/user/repo），获取加速拉取命令。
+        </p>
+        <div class="flex gap-2 mb-2">
+          <input
+            id="docker-image"
+            type="text"
+            placeholder="请输入镜像地址，例如：hello-world 或 ghcr.io/user/repo"
+            class="flex-grow p-2 border border-gray-400 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-400 dark:placeholder-gray-500"
+          />
+          <button
+            onclick="convertDockerImage()"
+            class="bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition"
+          >
+            获取加速命令
+          </button>
+        </div>
+        <p
+          id="docker-result"
+          class="mt-2 text-green-600 dark:text-green-400 result-text hidden"
+        ></p>
+        <div id="docker-buttons" class="flex gap-2 mt-2 docker-buttons hidden">
+          <button
+            onclick="copyDockerCommand()"
+            class="bg-gray-200 dark:bg-gray-600 text-gray-800 dark:text-gray-200 px-3 py-1 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition w-full"
+          >
+            📋 复制命令
+          </button>
+        </div>
+      </div>
+
+      <footer class="mt-6 text-center text-gray-500 dark:text-gray-400">
+        Powered by
+        <a
+          href="https://github.com/fscarmen2/Cloudflare-Accel"
+          class="text-blue-500 hover:underline"
+          >fscarmen2/Cloudflare-Accel</a
+        >
+      </footer>
+    </div>
+
+    <div id="toast" class="toast"></div>
+
+    <script src="/client.js"></script>
+  </body>
+</html>

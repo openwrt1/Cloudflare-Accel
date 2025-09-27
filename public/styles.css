@@ -1,0 +1,138 @@
+body {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: "Inter", sans-serif;
+  transition:
+    background-color 0.3s,
+    color 0.3s;
+  padding: 1rem;
+}
+.light-mode {
+  background: linear-gradient(to bottom right, #f1f5f9, #e2e8f0);
+  color: #111827;
+}
+.dark-mode {
+  background: linear-gradient(to bottom right, #1f2937, #374151);
+  color: #e5e7eb;
+}
+.container {
+  width: 100%;
+  max-width: 800px;
+  padding: 1.5rem;
+  border-radius: 0.75rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+.light-mode .container {
+  background: #ffffff;
+}
+.dark-mode .container {
+  background: #1f2937;
+}
+.section-box {
+  background: linear-gradient(to bottom, #ffffff, #f3f4f6);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+.dark-mode .section-box {
+  background: linear-gradient(to bottom, #374151, #1f2937);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+.theme-toggle {
+  position: fixed;
+  top: 0.5rem;
+  right: 0.5rem;
+  padding: 0.5rem;
+  font-size: 1.2rem;
+}
+.toast {
+  position: fixed;
+  bottom: 1rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #10b981;
+  color: white;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  opacity: 0;
+  transition: opacity 0.3s;
+  font-size: 0.9rem;
+  max-width: 90%;
+  text-align: center;
+}
+.toast.show {
+  opacity: 1;
+}
+.result-text {
+  word-break: break-all;
+  overflow-wrap: break-word;
+  font-size: 0.95rem;
+  max-width: 100%;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  background: #f3f4f6;
+}
+.dark-mode .result-text {
+  background: #2d3748;
+}
+
+input[type="text"] {
+  background-color: white !important;
+  color: #111827 !important;
+}
+.dark-mode input[type="text"] {
+  background-color: #374151 !important;
+  color: #e5e7eb !important;
+}
+
+@media (max-width: 640px) {
+  .container {
+    padding: 1rem;
+  }
+  .section-box {
+    padding: 1rem;
+    margin-bottom: 1rem;
+  }
+  h1 {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+  }
+  h2 {
+    font-size: 1.25rem;
+    margin-bottom: 0.75rem;
+  }
+  p {
+    font-size: 0.875rem;
+  }
+  input {
+    font-size: 0.875rem;
+    padding: 0.5rem;
+    min-height: 44px;
+  }
+  button {
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+    min-height: 44px;
+  }
+  .flex.gap-2 {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .github-buttons,
+  .docker-buttons {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .result-text {
+    font-size: 0.8rem;
+    padding: 0.4rem;
+  }
+  footer {
+    font-size: 0.75rem;
+  }
+}

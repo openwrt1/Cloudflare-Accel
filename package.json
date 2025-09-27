@@ -6,7 +6,9 @@
     "deploy": "wrangler deploy",
     "dev": "wrangler dev",
     "start": "wrangler dev",
-    "dev:remote": "wrangler dev --remote"
+    "dev:remote": "wrangler dev --remote",
+    "upload-assets": "npx wrangler kv key put --binding=SITE_ASSETS \"index.html\" --path=\"./public/index.html\" --remote && npx wrangler kv key put --binding=SITE_ASSETS \"styles.css\" --path=\"./public/styles.css\" --remote && npx wrangler kv key put --binding=SITE_ASSETS \"client.js\" --path=\"./public/client.js\" --remote && npx wrangler kv key put --binding=SITE_ASSETS \"favicon.svg\" --path=\"./public/favicon.svg\" --remote",
+    "deploy:full": "npm run upload-assets && wrangler deploy"
   },
   "devDependencies": {
     "wrangler": "^4.40.2"
