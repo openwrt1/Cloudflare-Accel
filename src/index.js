@@ -460,6 +460,83 @@ function getEmptyBodySHA256() {
   return "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855";
 }
 
+/**
+ * 解析请求路径，确定目标域名和路径
+ * @param {URL} url - 请求的 URL 对象
+ * @returns {{targetDomain: string, targetPath: string, isDockerRequest: boolean, isV2Request: boolean, v2RequestType: string | null, v2RequestTag: string | null} | null}
+ */
+function parseTarget(url) {
+  let path = url.pathname;
+
+  // 检查是否为 Docker V2 API 请求
+  let isV2Request = false;
+  let v2RequestType = null;
+  let v2RequestTag = null;
+  if (path.startsWith("/v2/")) {
+    isV2Request = true;
+    path = path.replace("/v2/", "");
+    const pathSegments = path.split("/").filter(Boolean);
+    if (pathSegments.length >= 3) {
+      v2RequestType = pathSegments[pathSegments.length - 2];
+      v2RequestTag = pathSegments[pathSegments.length - 1];
+      path = pathSegments.slice(0, pathSegments.length - 2).join("/");
+    }
+  }
+
+  const pathParts = path.split("/").filter(Boolean);
+  if (pathParts.length < 1) return null;
+
+  let targetDomain, targetPath;
+  const fullPath = path.startsWith("/") ? path.substring(1) : path;
+
+  if (fullPath.startsWith("https://") || fullPath.startsWith("http://")) {
+    const urlObj = new URL(fullPath);
+    targetDomain = urlObj.hostname;
+    targetPath = urlObj.pathname.substring(1) + urlObj.search;
+  } else if (pathParts[0] === "docker.io") {
+    targetDomain = "registry-1.docker.io";
+    targetPath =
+      pathParts.length === 2
+        ? `library/${pathParts[1]}`
+        : pathParts.slice(1).join("/");
+  } else if (ALLOWED_HOSTS.includes(pathParts[0])) {
+    targetDomain = pathParts[0];
+    targetPath = pathParts.slice(1).join("/") + url.search;
+  } else if (pathParts.length >= 1 && pathParts[0] === "library") {
+    targetDomain = "registry-1.docker.io";
+    targetPath = pathParts.join("/");
+  } else if (pathParts.length >= 2) {
+    targetDomain = "registry-1.docker.io";
+    targetPath = pathParts.join("/");
+  } else {
+    targetDomain = "registry-1.docker.io";
+    targetPath = `library/${pathParts.join("/")}`;
+  }
+
+  if (targetDomain === "docker.io") {
+    targetDomain = "registry-1.docker.io";
+  }
+
+  const isDockerRequest = [
+    "quay.io",
+    "gcr.io",
+    "k8s.gcr.io",
+    "registry.k8s.io",
+    "ghcr.io",
+    "docker.cloudsmith.io",
+    "registry-1.docker.io",
+  ].includes(targetDomain);
+
+  return {
+    targetDomain,
+    targetPath,
+    isDockerRequest,
+    isV2Request,
+    v2RequestType,
+    v2RequestTag,
+  };
+}
+
 async function handleRequest(request, redirectCount = 0) {
   const MAX_REDIRECTS = 5; // 最大重定向次数
   const url = new URL(request.url);
@@ -476,106 +553,21 @@ async function handleRequest(request, redirectCount = 0) {
     });
   }
 
-  // 处理 Docker V2 API 或 GitHub 代理请求
-  let isV2Request = false;
-  let v2RequestType = null; // 'manifests' or 'blobs'
-  let v2RequestTag = null; // tag or digest
-  if (path.startsWith("/v2/")) {
-    isV2Request = true;
-    path = path.replace("/v2/", "");
-
-    // 解析 V2 API 请求类型和标签/摘要
-    const pathSegments = path.split("/").filter((part) => part);
-    if (pathSegments.length >= 3) {
-      // 格式如: nginx/manifests/latest 或 nginx/blobs/sha256:xxx
-      v2RequestType = pathSegments[pathSegments.length - 2];
-      v2RequestTag = pathSegments[pathSegments.length - 1];
-      // 提取镜像名称部分（去掉 manifests/tag 或 blobs/digest 部分）
-      path = pathSegments.slice(0, pathSegments.length - 2).join("/");
-    }
-  }
-
-  // 提取目标域名和路径
-  const pathParts = path.split("/").filter((part) => part);
-  if (pathParts.length < 1) {
+  const targetInfo = parseTarget(url);
+  if (!targetInfo) {
     return new Response("Invalid request: target domain or path required\n", {
       status: 400,
     });
   }
 
-  let targetDomain,
+  const {
+    targetDomain,
     targetPath,
-    isDockerRequest = false;
-
-  // 检查路径是否以 https:// 或 http:// 开头
-  const fullPath = path.startsWith("/") ? path.substring(1) : path;
-
-  if (fullPath.startsWith("https://") || fullPath.startsWith("http://")) {
-    // 处理 /https://domain.com/... 或 /http://domain.com/... 格式
-    const urlObj = new URL(fullPath);
-    targetDomain = urlObj.hostname;
-    targetPath = urlObj.pathname.substring(1) + urlObj.search; // 移除开头的斜杠
-
-    // 检查是否为 Docker 请求
-    isDockerRequest = [
-      "quay.io",
-      "gcr.io",
-      "k8s.gcr.io",
-      "registry.k8s.io",
-      "ghcr.io",
-      "docker.cloudsmith.io",
-      "registry-1.docker.io",
-      "docker.io",
-    ].includes(targetDomain);
-
-    // 处理 docker.io 域名，转换为 registry-1.docker.io
-    if (targetDomain === "docker.io") {
-      targetDomain = "registry-1.docker.io";
-    }
-  } else {
-    // 处理 Docker 镜像路径的多种格式
-    if (pathParts[0] === "docker.io") {
-      // 处理 docker.io/library/nginx 或 docker.io/amilys/embyserver 格式
-      isDockerRequest = true;
-      targetDomain = "registry-1.docker.io";
-
-      if (pathParts.length === 2) {
-        // 处理 docker.io/nginx 格式，添加 library 命名空间
-        targetPath = `library/${pathParts[1]}`;
-      } else {
-        // 处理 docker.io/amilys/embyserver 或 docker.io/library/nginx 格式
-        targetPath = pathParts.slice(1).join("/");
-      }
-    } else if (ALLOWED_HOSTS.includes(pathParts[0])) {
-      // Docker 镜像仓库（如 ghcr.io）或 GitHub 域名（如 github.com）
-      targetDomain = pathParts[0];
-      targetPath = pathParts.slice(1).join("/") + url.search;
-      isDockerRequest = [
-        "quay.io",
-        "gcr.io",
-        "k8s.gcr.io",
-        "registry.k8s.io",
-        "ghcr.io",
-        "docker.cloudsmith.io",
-        "registry-1.docker.io",
-      ].includes(targetDomain);
-    } else if (pathParts.length >= 1 && pathParts[0] === "library") {
-      // 处理 library/nginx 格式
-      isDockerRequest = true;
-      targetDomain = "registry-1.docker.io";
-      targetPath = pathParts.join("/");
-    } else if (pathParts.length >= 2) {
-      // 处理 amilys/embyserver 格式（带命名空间但不是 library）
-      isDockerRequest = true;
-      targetDomain = "registry-1.docker.io";
-      targetPath = pathParts.join("/");
-    } else {
-      // 处理单个镜像名称，如 nginx
-      isDockerRequest = true;
-      targetDomain = "registry-1.docker.io";
-      targetPath = `library/${pathParts.join("/")}`;
-    }
-  }
+    isDockerRequest,
+    isV2Request,
+    v2RequestType,
+    v2RequestTag,
+  } = targetInfo;
 
   // 默认白名单检查：只允许 ALLOWED_HOSTS 中的域名
   if (!ALLOWED_HOSTS.includes(targetDomain)) {
