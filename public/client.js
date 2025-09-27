@@ -141,6 +141,27 @@ function convertGitCloneUrl() {
     return;
   }
 
+  // 前端白名单验证
+  const ALLOWED_GIT_HOSTS = [
+    "github.com",
+    "git.openwrt.org",
+    // 在这里添加更多允许的 git 域名
+  ];
+  try {
+    const gitUrl = new URL(input);
+    if (!ALLOWED_GIT_HOSTS.includes(gitUrl.hostname)) {
+      showToast(`域名 ${gitUrl.hostname} 不在白名单中`, true);
+      result.classList.add("hidden");
+      buttons.classList.add("hidden");
+      return;
+    }
+  } catch (e) {
+    showToast("无效的 URL 格式", true);
+    result.classList.add("hidden");
+    buttons.classList.add("hidden");
+    return;
+  }
+
   // 格式: git clone https://<域名>/<原始git地址>
   const acceleratedGitUrl =
     "https://" + currentDomain + "/" + input.substring(8);
